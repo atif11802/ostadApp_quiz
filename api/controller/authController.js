@@ -161,6 +161,7 @@ exports.verifyOtp = async (req, res, next) => {
 		if (otpOk && sessionOk) {
 			// check if otp exist
 			const otpExist = await Otp.findOne({ session }).lean();
+
 			//if otp does not exist then return error
 			if (!otpExist) {
 				error.otp = "your otp session has expired";
@@ -206,7 +207,7 @@ exports.verifyOtp = async (req, res, next) => {
 				error.session = "session is required";
 			}
 		}
-		error.otp = "otp is incorrect";
+
 		return res.status(400).json({ error });
 	} catch (error) {
 		next(error);

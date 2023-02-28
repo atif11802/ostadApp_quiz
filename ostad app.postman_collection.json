@@ -147,7 +147,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n      \"phone\":\"+8801763973727\",\r\n      \"password\":\"Ab123456789%24\"\r\n  \r\n}",
+							"raw": "{\r\n       \"phone\":\"+8801763973727\",\r\n    \"password\":\"Ab123456789#\"\r\n  \r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -198,7 +198,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n      \r\n      \"oldPassword\":\"Ab123456789#\",\r\n      \"newPassword\" :\"Ab123456789@\",\r\n      \"logoutFromAllDevice\":true\r\n  \r\n}",
+							"raw": "{\r\n      \r\n      \"oldPassword\":\"Ab123456789#\",\r\n      \"newPassword\" :\"Ab123456789*\",\r\n     \" logoutFromAllDevice\" : false\r\n  \r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -316,6 +316,57 @@
 								"api",
 								"auth",
 								"reset-password"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "logout",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();\r",
+									"pm.environment.set(\"sessionUUID\", jsonData?.session);\r",
+									"pm.environment.set(\"otp\", jsonData?.otp);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{BASE_URL}}/api/auth/logout",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"logout"
 							]
 						}
 					},
