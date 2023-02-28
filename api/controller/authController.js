@@ -6,6 +6,7 @@ const { v4: uuid } = require("uuid");
 const generateOTP = require("../../utils/Otp_generator");
 const Otp = require("../../models/Otp");
 const e = require("express");
+const { sendSms, sendEmail } = require("../../utils/utility");
 
 exports.login = async (req, res, next) => {
 	const { phone = "", password = "" } = req.body;
@@ -128,6 +129,8 @@ exports.register = async (req, res, next) => {
 						session: sessionID,
 					});
 					await otp_create.save();
+
+					sendSms(phone, otp);
 					return res.json({
 						session: sessionID,
 						otp,
@@ -163,6 +166,7 @@ exports.register = async (req, res, next) => {
 
 				await otp_create.save();
 
+				sendSms(phone, otp);
 				return res.json({
 					otp,
 					session: sessionID,
@@ -285,6 +289,13 @@ exports.sendEmail = async (req, res, next) => {
 					`,
 				};
 
+				sendEmail(
+					email,
+					"Email Verification",
+					"click on the link below to verify your email address" +
+						" " +
+						"http://localhost:5000/api/auth/verify-email?token=${token}"
+				);
 				return res.json({
 					success: true,
 					message: "Email sent successfully",
