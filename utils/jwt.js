@@ -15,9 +15,9 @@ exports.createToken = (userID, session) => {
 		},
 		process.env.JWT_SECRET,
 		{
-			// expiresIn: "1d",
+			expiresIn: "1d",
 			//expiresIn 10 seconds for testing
-			expiresIn: 60,
+			// expiresIn: 60,
 		}
 	);
 };

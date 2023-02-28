@@ -5,6 +5,7 @@ const { createToken, parseToken } = require("../../utils/jwt");
 const { v4: uuid } = require("uuid");
 const generateOTP = require("../../utils/Otp_generator");
 const Otp = require("../../models/Otp");
+const e = require("express");
 
 exports.login = async (req, res, next) => {
 	const { phone = "", password = "" } = req.body;
@@ -96,10 +97,12 @@ exports.register = async (req, res, next) => {
 				userExist.forEach((user) => {
 					if (user.phone_verified === true) {
 						phoneExist = true;
-						error.phone = "Phone number already exist.";
-					} else if (user.email_verified === true) {
+						error.phone = "Phone number taken already.";
+					}
+
+					if (user.email_verified === true) {
 						emailExist = true;
-						error.email = "Email address already exist.";
+						error.email = "Email address taken already.";
 					}
 				});
 
@@ -418,6 +421,120 @@ exports.changePassword = async (req, res, next) => {
 			} else {
 				error.newPassword = "New password and old password are same.";
 			}
+		}
+
+		return res.status(400).json({ error });
+	} catch (error) {
+		next(error);
+	}
+};
+
+exports.forgetPassword = async (req, res, next) => {
+	const { phone = "" } = req.body;
+
+	const error = {};
+	try {
+		const phoneOk = phone !== "";
+
+		if (phoneOk) {
+			const existUser = await User.findOne({
+				phone: String(phone).trim(),
+			});
+			if (existUser) {
+				if (existUser.phone_verified === true) {
+					let otp = generateOTP(6);
+
+					const sessionID = uuid();
+
+					await User.findByIdAndUpdate(existUser._id, {
+						$push: {
+							login_sessions: sessionID,
+						},
+					});
+
+					const otp_create = new Otp({
+						session: sessionID,
+						otp,
+					});
+
+					await otp_create.save();
+
+					return res.json({
+						session: sessionID,
+						otp,
+					});
+				} else {
+					error.phone = "Email not verified";
+				}
+			}
+
+			error.phone = "User not found";
+		}
+
+		error.phone = "Phone is required";
+
+		return res.status(400).json({ error });
+	} catch (error) {
+		next(error);
+	}
+};
+
+exports.resetPassword = async (req, res, next) => {
+	const { session = "", otp = "", newPassword = "" } = req.body;
+	const error = {};
+	try {
+		const sessionOk = session !== "";
+		const otpOk = otp !== "";
+		//regex the password will be 12 characters, 1 uppercase, 1 lowercase, 1 number, 1 special character
+		const newPasswordOk =
+			newPassword !== "" &&
+			newPassword.match(
+				/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{12,}$/
+			);
+
+		if (sessionOk && otpOk && newPasswordOk) {
+			const existOtp = await Otp.findOne({
+				session,
+			});
+
+			if (existOtp) {
+				if (existOtp.otp === otp) {
+					const existUser = await User.findOne({
+						login_sessions: session,
+					});
+
+					if (existUser) {
+						await User.findByIdAndUpdate(existUser._id, {
+							hash: await argon.hash(newPassword),
+							$pull: {
+								login_sessions: session,
+							},
+						});
+
+						await Otp.findByIdAndDelete(existOtp._id);
+
+						return res.json({
+							success: true,
+							message: "Password reset successful.",
+						});
+					} else {
+						error.message = "User not found";
+					}
+				} else {
+					error.otp = "OTP is wrong";
+				}
+			} else {
+				error.session = "otp not found";
+			}
+		} else if (!sessionOk) {
+			error.session = "Session is required";
+		} else if (!otpOk) {
+			error.otp = "OTP is required";
+		} else if (String(password) === "") {
+			error.password = "Password is required";
+		} else if (!newPasswordOk) {
+			error.password =
+				"Password must be 12 characters, 1 uppercase, 1 lowercase, 1 number, 1 special character";
 		}
 
 		return res.status(400).json({ error });
