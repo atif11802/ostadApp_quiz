@@ -1,0 +1,360 @@
+{
+	"info": {
+		"_postman_id": "adb59952-c3f1-4c28-873f-77f48bb6b5ea",
+		"name": "ostad app",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "15806291"
+	},
+	"item": [
+		{
+			"name": "auth",
+			"item": [
+				{
+					"name": "register user",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();\r",
+									"pm.environment.set(\"sessionUUID\", jsonData?.session);\r",
+									"pm.environment.set(\"otp\", jsonData?.otp);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"name\":\"atif\",\r\n    \"email\":\"ratul@gmail.com\",\r\n    \"phone\":\"+8801763973727\",\r\n    \"password\":\"Ab123456789*\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{BASE_URL}}/api/auth/register",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"register"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "verify otp",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"session\":\"{{sessionUUID}}\",\r\n  \"otp\":\"{{otp}}\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{BASE_URL}}/api/auth/verify-otp",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"verify-otp"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "verify email",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"email\":\"ratul@gmail.com\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{BASE_URL}}/api/auth/send-email",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"send-email"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "login user",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();\r",
+									"pm.environment.set(\"token\", jsonData?.token);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n      \"phone\":\"+8801763973727\",\r\n      \"password\":\"Ab123456789%24\"\r\n  \r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{BASE_URL}}/api/auth/login",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"login"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "change password",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();\r",
+									"pm.environment.set(\"sessionUUID\", jsonData?.session);\r",
+									"pm.environment.set(\"otp\", jsonData?.otp);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n      \r\n      \"oldPassword\":\"Ab123456789#\",\r\n      \"newPassword\" :\"Ab123456789@\",\r\n      \"logoutFromAllDevice\":true\r\n  \r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{BASE_URL}}/api/auth/change-password",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"change-password"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "forget password",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();\r",
+									"pm.environment.set(\"sessionUUID\", jsonData?.session);\r",
+									"pm.environment.set(\"otp\", jsonData?.otp);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n      \r\n      \"phone\":\"+8801763973727\"\r\n  \r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{BASE_URL}}/api/auth/forget-password",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"forget-password"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "reset password",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();\r",
+									"pm.environment.set(\"sessionUUID\", jsonData?.session);\r",
+									"pm.environment.set(\"otp\", jsonData?.otp);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n      \"session\":\"{{sessionUUID}}\",\r\n      \"otp\":\"{{otp}}\",\r\n      \"newPassword\":\"Ab123456789%24\"\r\n  \r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{BASE_URL}}/api/auth/reset-password",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"reset-password"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "user profile",
+			"item": [
+				{
+					"name": "get profile",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{BASE_URL}}/api/getProfile",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"api",
+								"getProfile"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}
