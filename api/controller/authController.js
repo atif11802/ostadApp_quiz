@@ -13,48 +13,36 @@ exports.login = async (req, res, next) => {
 	const error = {};
 
 	try {
-		const phoneOk =
-			String(phone).trim() !== "" && /^\+88\d{11}$/.test(String(phone).trim());
-		const passwordOk = password !== "";
+		const existUser = await User.findOne({
+			phone,
+		}).select("+hash");
 
-		if (phoneOk && passwordOk) {
-			const existUser = await User.findOne({
-				phone,
-			}).select("+hash");
+		if (existUser) {
+			if (existUser.phone_verified === true) {
+				const passwordMatch = await argon.verify(existUser.hash, password);
 
-			if (existUser) {
-				if (existUser.phone_verified === true) {
-					const passwordMatch = await argon.verify(existUser.hash, password);
+				if (passwordMatch) {
+					const sessionID = uuid();
+					const token = createToken(existUser._id, sessionID);
+					await User.findByIdAndUpdate(existUser._id, {
+						$push: {
+							login_sessions: sessionID,
+						},
+					});
 
-					if (passwordMatch) {
-						const sessionID = uuid();
-						const token = createToken(existUser._id, sessionID);
-						await User.findByIdAndUpdate(existUser._id, {
-							$push: {
-								login_sessions: sessionID,
-							},
-						});
-
-						existUser.hash = undefined;
-						return res.status(200).json({
-							token,
-							user: existUser,
-						});
-					} else {
-						error.password = "Password is incorrect.";
-					}
+					existUser.hash = undefined;
+					return res.status(200).json({
+						token,
+						user: existUser,
+					});
 				} else {
-					error.phone = "Phone number is not verified.";
+					error.password = "Password is incorrect.";
 				}
 			} else {
-				error.phone = "User not found.";
+				error.phone = "Phone number is not verified.";
 			}
-		}
-		if (!phoneOk) {
-			error.phone = "Phone number is invalid.";
-		}
-		if (!passwordOk) {
-			error.password = "Password is required.";
+		} else {
+			error.phone = "User not found.";
 		}
 
 		return res.status(400).json({ error });
@@ -68,134 +56,95 @@ exports.register = async (req, res, next) => {
 		const error = {};
 		const { name = "", email = "", password = "", phone = "" } = req.body;
 
-		const emailOk =
-			String(email).trim() !== "" &&
-			/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(
-				String(email).trim()
-			);
-		//regex for password validation (at least 12 characters, 1 uppercase, 1 lowercase, 1 number, 1 special character)
-		const passwordOk =
-			password !== "" &&
-			/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[a-zA-Z]).{12,}$/.test(password);
-		const nameOk = name !== "";
+		const userExist = await User.find({
+			$or: [
+				{ email: String(email).trim(), email_verified: true },
+				{ phone, phone_verified: true },
+			],
+		}).lean();
 
-		const phoneOk =
-			String(phone).trim() !== "" && /^\+88\d{11}$/.test(String(phone).trim());
+		if (userExist.length > 0) {
+			let phoneExist = false;
+			let emailExist = false;
 
-		if (nameOk && emailOk && passwordOk && phoneOk) {
-			const userExist = await User.find({
-				$or: [
-					{ email: String(email).trim(), email_verified: true },
-					{ phone, phone_verified: true },
-				],
-			}).lean();
-
-			if (userExist.length > 0) {
-				let phoneExist = false;
-				let emailExist = false;
-
-				//check if phonenumber Or email which is verified
-				userExist.forEach((user) => {
-					if (user.phone_verified === true) {
-						phoneExist = true;
-						error.phone = "Phone number taken already.";
-					}
-
-					if (user.email_verified === true) {
-						emailExist = true;
-						error.email = "Email address taken already.";
-					}
-				});
-
-				if (!phoneExist && !emailExist) {
-					const user = new User({
-						name,
-						email: String(email).trim(),
-						hash: await argon.hash(password),
-						phone,
-					});
-					await user.save();
-					delete user.hash;
-					let otp = generateOTP(6);
-					//create session
-					const sessionID = uuid();
-					await User.findByIdAndUpdate(user, {
-						$push: {
-							login_sessions: sessionID,
-						},
-					});
-					const otp_create = new Otp({
-						otp,
-						session: sessionID,
-					});
-					await otp_create.save();
-
-					sendSms(phone, otp);
-					return res.json({
-						session: sessionID,
-						otp,
-					});
+			//check if phonenumber Or email which is verified
+			userExist.forEach((user) => {
+				if (user.phone_verified === true) {
+					phoneExist = true;
+					error.phone = "Phone number taken already.";
 				}
 
-				return res.status(400).json({ error });
-			} else {
+				if (user.email_verified === true) {
+					emailExist = true;
+					error.email = "Email address taken already.";
+				}
+			});
+
+			if (!phoneExist && !emailExist) {
 				const user = new User({
 					name,
 					email: String(email).trim(),
 					hash: await argon.hash(password),
 					phone,
 				});
-
 				await user.save();
-
 				delete user.hash;
 				let otp = generateOTP(6);
-
+				//create session
 				const sessionID = uuid();
-
 				await User.findByIdAndUpdate(user, {
 					$push: {
 						login_sessions: sessionID,
 					},
 				});
-
 				const otp_create = new Otp({
-					session: sessionID,
 					otp,
+					session: sessionID,
 				});
-
 				await otp_create.save();
 
 				sendSms(phone, otp);
 				return res.json({
-					otp,
 					session: sessionID,
+					otp,
 				});
 			}
-		} else {
-			if (!nameOk) {
-				error.name = "Name is required.";
-			} else if (String(email).trim() === "") {
-				error.email = "Email address is required.";
-			} else if (
-				!/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(
-					String(email).trim()
-				)
-			) {
-				error.email = "Email address is invalid.";
-			} else if (String(password).trim() === "") {
-				error.password = "Password is required.";
-			} else if (
-				!/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[a-zA-Z]).{12,}$/.test(password)
-			) {
-				error.password =
-					"Password must be at least 12 characters, 1 uppercase, 1 lowercase, 1 number, 1 special character";
-			} else if (!phoneOk) {
-				error.phone = "Phone number is invalid";
-			}
-		}
 
-		return res.status(400).json({ error });
+			return res.status(400).json({ error });
+		} else {
+			const user = new User({
+				name,
+				email: String(email).trim(),
+				hash: await argon.hash(password),
+				phone,
+			});
+
+			await user.save();
+
+			delete user.hash;
+			let otp = generateOTP(6);
+
+			const sessionID = uuid();
+
+			await User.findByIdAndUpdate(user, {
+				$push: {
+					login_sessions: sessionID,
+				},
+			});
+
+			const otp_create = new Otp({
+				session: sessionID,
+				otp,
+			});
+
+			await otp_create.save();
+
+			sendSms(phone, otp);
+			return res.json({
+				otp,
+				session: sessionID,
+			});
+		}
 	} catch (error) {
 		next(error);
 	}
@@ -268,45 +217,37 @@ exports.sendEmail = async (req, res, next) => {
 	const { email } = req.body;
 	const error = {};
 	try {
-		const emailOk =
-			String(email).trim() !== "" &&
-			/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(
-				String(email).trim()
-			);
+		const user = await User.findOne({
+			email: String(email).trim(),
+			email_verified: false,
+		}).lean();
 
-		if (emailOk) {
-			const user = await User.findOne({ email: String(email).trim() }).lean();
+		if (user) {
+			const sessionUuid = uuid();
+			//send email
+			const token = createToken(user._id, sessionUuid);
 
-			if (user) {
-				const sessionUuid = uuid();
-				//send email
-				const token = createToken(user._id, sessionUuid);
-
-				const mailOptions = {
-					subject: "Email Verification",
-					html: `<p>Click on the link below to verify your email address</p>
+			const mailOptions = {
+				subject: "Email Verification",
+				html: `<p>Click on the link below to verify your email address</p>
 					<a href="http://localhost:5000/api/auth/verify-email?token=${token}">Verify Email</a>
 					`,
-				};
+			};
 
-				sendEmail(
-					email,
-					"Email Verification",
-					"click on the link below to verify your email address" +
-						" " +
-						"http://localhost:5000/api/auth/verify-email?token=${token}"
-				);
-				return res.json({
-					success: true,
-					message: "Email sent successfully",
-					mailOptions,
-				});
-			} else {
-				error.email = "Email not found";
-			}
-		} else {
-			error.email = "Email is required";
+			sendEmail(
+				email,
+				"Email Verification",
+				"click on the link below to verify your email address" +
+					" " +
+					"http://localhost:5000/api/auth/verify-email?token=${token}"
+			);
+			return res.json({
+				success: true,
+				message: "Email sent successfully",
+				mailOptions,
+			});
 		}
+		error.email = "Email not found/Email already verified";
 
 		return res.status(400).json({ error });
 	} catch (error) {

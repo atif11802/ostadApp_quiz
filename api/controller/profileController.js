@@ -9,9 +9,8 @@ exports.getProfile = async (req, res, next) => {
 		const user = await User.findById(userID).select("-password");
 		if (user) {
 			return res.status(200).json(user);
-		} else {
-			error.message = "User not found";
 		}
+		error.message = "User not found";
 
 		return res.status(400).json({ error });
 	} catch (err) {

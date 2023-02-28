@@ -13,12 +13,17 @@ const {
 	forgetPassword,
 	resetPassword,
 } = require("../controller/authController");
+const {
+	registrationValidator,
+	sendEmailValidator,
+	loginValidator,
+} = require("../../utils/Validator");
 
 // Login or register
-router.post("/auth/login", login);
-router.post("/auth/register", register);
+router.post("/auth/login", loginValidator, login);
+router.post("/auth/register", registrationValidator, register);
 router.post("/auth/verify-otp", verifyOtp);
-router.post("/auth/send-email", sendEmail);
+router.post("/auth/send-email", sendEmailValidator, sendEmail);
 router.get("/auth/verify-email", verifyEmail);
 
 router.patch("/auth/change-password", auth, changePassword);
