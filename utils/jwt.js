@@ -7,14 +7,19 @@ const jwt = require("jsonwebtoken");
  * @param {String} sessionID Session ID
  * @returns JWT token
  */
-exports.createToken = (userID, sessionID) => {
-  return jwt.sign(
-    {
-      sub: userID,
-      sessionID,
-    },
-    process.env.JWT_SECRET
-  );
+exports.createToken = (userID, session) => {
+	return jwt.sign(
+		{
+			sub: userID,
+			session,
+		},
+		process.env.JWT_SECRET,
+		{
+			// expiresIn: "1d",
+			//expiresIn 10 seconds for testing
+			expiresIn: 60,
+		}
+	);
 };
 
 /**
@@ -24,5 +29,5 @@ exports.createToken = (userID, sessionID) => {
  * @returns parsed data
  */
 exports.parseToken = (token, sessionID) => {
-  return jwt.decode(token);
+	return jwt.decode(token);
 };

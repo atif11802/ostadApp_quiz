@@ -9,31 +9,31 @@ opts.jwtFromRequest = ExtractJwt.fromAuthHeaderAsBearerToken();
 opts.secretOrKey = process.env.JWT_SECRET;
 
 passport.use(
-  new JwtStrategy(opts, async (jwt_payload, done) => {
-    try {
-      const user = await User.findOne({
-        $and: [
-          {
-            _id: jwt_payload.sub,
-          },
-          {
-            login_sessions: {
-              $in: jwt_payload.sessionID,
-            },
-          },
-        ],
-      });
+	new JwtStrategy(opts, async (jwt_payload, done) => {
+		try {
+			const user = await User.findOne({
+				$and: [
+					{
+						_id: jwt_payload.sub,
+					},
+					{
+						login_sessions: {
+							$in: jwt_payload.session,
+						},
+					},
+				],
+			});
 
-      if (user) {
-        return done(null, user);
-      } else {
-        const error = new Error("Illegal request!");
-        return done(error, false);
-      }
-    } catch (error) {
-      return done(error, false);
-    }
-  })
+			if (user) {
+				return done(null, user);
+			} else {
+				const error = new Error("Illegal request!");
+				return done(error, false);
+			}
+		} catch (error) {
+			return done(error, false);
+		}
+	})
 );
 
 module.exports = passport;
