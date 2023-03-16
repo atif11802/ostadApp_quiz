@@ -4,7 +4,9 @@ var router = express.Router();
 var apiRoutes = require("../api/routes");
 
 router.get("/", (req, res) => {
-  return res.sendStatus(200);
+	return res.status(200).json({
+		message: "Welcome to the API",
+	});
 });
 
 router.use("/api", apiRoutes);

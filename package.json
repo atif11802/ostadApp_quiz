@@ -1,29 +1,34 @@
 {
-  "name": "app",
-  "version": "0.0.0",
-  "private": true,
-  "scripts": {
-    "start": "node ./bin/www",
-    "dev": "nodemon -r dotenv/config ./bin/www"
-  },
-  "dependencies": {
-    "argon2": "^0.28.7",
-    "body-parser": "^1.20.0",
-    "cloudinary": "^1.30.1",
-    "connect-multiparty": "^2.2.0",
-    "cookie-parser": "~1.4.4",
-    "cors": "^2.8.5",
-    "debug": "~2.6.9",
-    "express": "~4.16.1",
-    "express-validator": "^6.15.0",
-    "mongoose": "^6.5.1",
-    "morgan": "~1.9.1",
-    "passport": "^0.6.0",
-    "passport-jwt": "^4.0.0",
-    "uuid": "^8.3.2"
-  },
-  "devDependencies": {
-    "dotenv": "^16.0.1",
-    "nodemon": "^2.0.19"
-  }
+	"name": "app",
+	"version": "0.0.0",
+	"private": true,
+	"scripts": {
+		"start": "node ./bin/www",
+		"dev": "concurrently \"nodemon ./bin/www\" \"npm run docs\"",
+		"docs": "open-swagger-ui ./swagger.json --open"
+	},
+	"dependencies": {
+		"bcrypt": "^5.1.0",
+		"body-parser": "^1.20.0",
+		"cloudinary": "^1.30.1",
+		"concurrently": "^7.6.0",
+		"connect-multiparty": "^2.2.0",
+		"cookie-parser": "~1.4.4",
+		"cors": "^2.8.5",
+		"debug": "~2.6.9",
+		"express": "~4.16.1",
+		"express-validator": "^6.15.0",
+		"mongoose": "^6.5.1",
+		"morgan": "~1.9.1",
+		"open-swagger-ui": "^1.2.0",
+		"passport": "^0.6.0",
+		"passport-jwt": "^4.0.0",
+		"swagger-jsdoc": "^6.2.8",
+		"swagger-ui-express": "^4.6.2",
+		"uuid": "^8.3.2"
+	},
+	"devDependencies": {
+		"dotenv": "^16.0.1",
+		"nodemon": "^2.0.19"
+	}
 }

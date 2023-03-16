@@ -1,6 +1,6 @@
 const express = require("express");
 const User = require("../../models/User");
-const argon = require("argon2");
+const bcrypt = require("bcrypt");
 const { createToken, parseToken } = require("../../utils/jwt");
 const { v4: uuid } = require("uuid");
 const generateOTP = require("../../utils/Otp_generator");
@@ -19,7 +19,7 @@ exports.login = async (req, res, next) => {
 
 		if (existUser) {
 			if (existUser.phone_verified === true) {
-				const passwordMatch = await argon.verify(existUser.hash, password);
+				const passwordMatch = await bcrypt.compare(password, existUser.hash);
 
 				if (passwordMatch) {
 					const sessionID = uuid();
@@ -84,7 +84,7 @@ exports.register = async (req, res, next) => {
 				const user = new User({
 					name,
 					email: String(email).trim(),
-					hash: await argon.hash(password),
+					hash: await bcrypt.hash(password, 10),
 					phone,
 				});
 				await user.save();
@@ -115,7 +115,7 @@ exports.register = async (req, res, next) => {
 			const user = new User({
 				name,
 				email: String(email).trim(),
-				hash: await argon.hash(password),
+				hash: await bcrypt.hash(password, 10),
 				phone,
 			});
 
@@ -346,17 +346,17 @@ exports.changePassword = async (req, res, next) => {
 		if (oldPassword && newPasswordOk && notSamePassword) {
 			const { hash } = await User.findById(req.user._id).select("hash");
 
-			if (await argon.verify(hash, oldPassword)) {
+			if (await bcrypt.compare(oldPassword, hash)) {
 				if (logoutFromAllDevice) {
 					await User.findByIdAndUpdate(req.user._id, {
-						hash: await argon.hash(newPassword),
+						hash: await bcrypt.hash(newPassword, 10),
 						$set: {
 							login_sessions: [],
 						},
 					});
 				}
 				await User.findByIdAndUpdate(req.user._id, {
-					hash: await argon.hash(newPassword),
+					hash: await bcrypt.hash(newPassword, 10),
 				});
 
 				return res.json({
@@ -458,7 +458,7 @@ exports.resetPassword = async (req, res, next) => {
 
 					if (existUser) {
 						await User.findByIdAndUpdate(existUser._id, {
-							hash: await argon.hash(newPassword),
+							hash: await bcrypt.hash(newPassword, 10),
 							$pull: {
 								login_sessions: session,
 							},
